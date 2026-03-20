@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CodeIssue } from '../../models';
 
@@ -7,7 +7,8 @@ import { CodeIssue } from '../../models';
   templateUrl: './issues-list.component.html',
   styleUrls: ['./issues-list.component.css'],
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class IssuesListComponent {
   @Input() issues: CodeIssue[] = [];

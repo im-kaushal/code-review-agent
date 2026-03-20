@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CodeMetrics } from '../../models';
 
@@ -7,7 +7,8 @@ import { CodeMetrics } from '../../models';
   templateUrl: './metrics.component.html',
   styleUrls: ['./metrics.component.css'],
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MetricsComponent {
   @Input() metrics: CodeMetrics | null = null;

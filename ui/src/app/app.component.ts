@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { CodeIssue, CodeMetrics } from './models';
 import { CodeReviewService } from './services/code-review.service';
 import { EditorComponent } from './components/editor/editor.component';
@@ -21,8 +23,9 @@ import { MetricsComponent } from './components/metrics/metrics.component';
   ],
   providers: [CodeReviewService]
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   issues: CodeIssue[] = [];
+  allIssues: CodeIssue[] = [];
   metrics: CodeMetrics | null = null;
   isLoading = false;
   error: string | null = null;
@@ -45,6 +48,8 @@ function calculatePrice(quantity, unitPrice) {
   return total_amount;
 }`;
 
+  private destroy$ = new Subject<void>();
+
   constructor(private codeReviewService: CodeReviewService) {}
 
   ngOnInit(): void {
@@ -52,21 +57,30 @@ function calculatePrice(quantity, unitPrice) {
   }
 
   private subscribeToService(): void {
-    this.codeReviewService.getReviewResults().subscribe((issues: CodeIssue[]) => {
-      this.issues = this.filterIssuesBySeverity(issues);
-    });
+    this.codeReviewService.getReviewResults()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((issues: CodeIssue[]) => {
+        this.allIssues = issues;
+        this.issues = this.filterIssuesBySeverity(issues);
+      });
 
-    this.codeReviewService.getMetrics().subscribe((metrics: CodeMetrics | null) => {
-      this.metrics = metrics;
-    });
+    this.codeReviewService.getMetrics()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((metrics: CodeMetrics | null) => {
+        this.metrics = metrics;
+      });
 
-    this.codeReviewService.getLoadingState().subscribe((loading: boolean) => {
-      this.isLoading = loading;
-    });
+    this.codeReviewService.getLoadingState()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((loading: boolean) => {
+        this.isLoading = loading;
+      });
 
-    this.codeReviewService.getError().subscribe((error: string | null) => {
-      this.error = error;
-    });
+    this.codeReviewService.getError()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((error: string | null) => {
+        this.error = error;
+      });
   }
 
   onReview(code: string): void {
@@ -84,16 +98,14 @@ function calculatePrice(quantity, unitPrice) {
 
   onSeverityChange(severity: string): void {
     this.selectedSeverity = severity;
-    this.codeReviewService.getReviewResults().subscribe((issues: CodeIssue[]) => {
-      this.issues = this.filterIssuesBySeverity(issues);
-    });
+    this.issues = this.filterIssuesBySeverity(this.allIssues);
   }
 
-  private filterIssuesBySeverity(issues: CodeIssue[]): CodeIssue[] {
+  private filterIssuesBySeverity(allIssues: CodeIssue[]): CodeIssue[] {
     if (this.selectedSeverity === 'all') {
-      return issues;
+      return allIssues;
     }
-    return issues.filter(issue => issue.severity === this.selectedSeverity);
+    return allIssues.filter(issue => issue.severity === this.selectedSeverity);
   }
 
   clearReview(): void {
@@ -171,5 +183,10 @@ function calculatePrice(quantity, unitPrice) {
       default:
         return '⭕';
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

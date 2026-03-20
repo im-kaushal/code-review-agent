@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -7,7 +7,8 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EditorComponent {
   @Input() code = '';
